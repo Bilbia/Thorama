@@ -6,50 +6,95 @@ using Valve.VR;
 
 public class ThorHammer : MonoBehaviour
 {
-    public GameObject Player;
-    public GameObject snapTo;
-    private Rigidbody body;
-    public float snapTime = 3;
-    public SteamVR_Action_Pose poseActionR;
-    //poseActionR = SteamVR_Input.GetAction<SteamVR_Action_Pose>("Pose_right_tip");
-    //vPosition = poseActionR[SteamVR_Input_Sources.RightHand].localPosition;
-    //qRotation = poseActionR[SteamVR_Input_Sources.RightHand].localRotation;
+    public GameObject leftHandObj;
+    public GameObject rightHandObj;
+    public GameObject head;
+
+    [SerializeField]
+    private float leftHandY;
+    [SerializeField]
+    private float rightHandY;
+    [SerializeField]
+    private float headY;
 
     private float dropTimer;
     private Interactable interactable;
+    [SerializeField]
     private bool called = false;
+    bool arrived = false;
+
+    public SteamVR_Action_Boolean grabPinch;
+    public SteamVR_Input_Sources leftInput = SteamVR_Input_Sources.LeftHand;
+    public SteamVR_Input_Sources rightInput = SteamVR_Input_Sources.RightHand;
+    public Hand leftHand;
+    public Hand rightHand;
+
+    GameManager gm;
+
 
 
     // Start is called before the first frame update
     void Start()
     {
         interactable = GetComponent<Interactable>();
-        body = GetComponent<Rigidbody>();
-
+        gm = GameManager.GetInstance();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //hands = GameObject.FindGameObjectsWithTag("hand");
-        // if (SteamVR_Input._default.inActions.GrabPinch.GetStateDown(inputSource))
-        //     called = true;
-        //     Debug.Log(called);
+        leftHandY = leftHandObj.transform.position.y;
+        rightHandY = rightHandObj.transform.position.y;
+        headY = head.transform.position.y;
+
+        if (gm.gameState == GameManager.GameState.WORTHY && SteamVR_Actions.default_GrabPinch.GetStateDown(leftInput) && leftHandY > headY){
+            called = true;
+            StartCoroutine(MoveFromTo(gameObject.transform, transform.position, leftHandObj, 12.0f, leftInput, leftHand));
+        }
+        if (gm.gameState == GameManager.GameState.WORTHY && SteamVR_Actions.default_GrabPinch.GetStateDown(rightInput) && rightHandY > headY){
+            called = true;
+            StartCoroutine(MoveFromTo(gameObject.transform, transform.position, rightHandObj, 12.0f, rightInput, rightHand));
+        }
+        
         
         
     }
 
-    // protected void HandAttachedUpdate(Hand hand)
-    // {
-    //     // Se tocar no colisor, soltar da mão
-    //     if (called){
-    //         hand.AttachObject(gameObject, GrabTypes Grip, Hand.AttachmentFlags flags = Hand.AttachmentFlags.SnapOnAttach);
-    //     }
-    // }
+    protected void HandAttachedUpdate(Hand hand)
+    {
+        if (called){
+            GrabTypes grip = hand.GetBestGrabbingType();
+            Hand.AttachmentFlags attFlags = gameObject.GetComponent<Throwable>().attachmentFlags | Hand.AttachmentFlags.SnapOnAttach;
+            hand.AttachObject(gameObject, grip, attFlags);
+        }
 
-    // private void FixedUpdate()
-    // {
+        if (hand.IsGrabEnding(this.gameObject))
+        {
+            hand.DetachObject(gameObject, false);
+            called = false;
+            arrived = false;
+        }
+    }
 
-    // }
-
+    IEnumerator MoveFromTo(Transform objectToMove, Vector3 a, GameObject handObj, float speed, SteamVR_Input_Sources input, Hand hand)
+    {
+        Vector3 b = handObj.transform.position;
+        float step = (speed / (a - b).magnitude) * Time.fixedDeltaTime;
+        float t = 0;
+        float dist;
+        while (!arrived && SteamVR_Actions.default_GrabPinch.GetState(input))
+        {
+            b = handObj.transform.position;
+            t += step;
+            objectToMove.position = Vector3.Lerp(a, b, t);
+            dist = Vector3.Distance(objectToMove.position, b);
+            Debug.Log(dist);
+            if(dist == 0){
+                arrived = true;
+                Debug.Log(arrived);
+                HandAttachedUpdate(hand);
+            }
+            yield return new WaitForFixedUpdate();
+        }
+    }
 }
