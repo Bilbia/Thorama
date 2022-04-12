@@ -29,6 +29,8 @@ public class ThorHammer : MonoBehaviour
     public Hand leftHand;
     public Hand rightHand;
 
+    public GameObject lightning;
+
     GameManager gm;
 
 
@@ -56,6 +58,21 @@ public class ThorHammer : MonoBehaviour
             StartCoroutine(MoveFromTo(gameObject.transform, transform.position, rightHandObj, 12.0f, rightInput, rightHand));
         }
         
+        if (leftHand.ObjectIsAttached(gameObject) && SteamVR_Actions.default_GrabGrip.GetState(leftInput)){
+            lightning.SetActive(true);
+            // Debug.Log("lancou raio");
+        }
+
+        if (rightHand.ObjectIsAttached(gameObject) && SteamVR_Actions.default_GrabGrip.GetState(rightInput)){
+            lightning.SetActive(true);
+            // Debug.Log("lancou raio");
+        }
+
+
+
+        if (SteamVR_Actions.default_GrabGrip.GetStateUp(leftInput) || SteamVR_Actions.default_GrabGrip.GetStateUp(rightInput)){
+            lightning.SetActive(false);
+        }
         
         
     }
@@ -88,10 +105,10 @@ public class ThorHammer : MonoBehaviour
             t += step;
             objectToMove.position = Vector3.Lerp(a, b, t);
             dist = Vector3.Distance(objectToMove.position, b);
-            Debug.Log(dist);
+            // Debug.Log(dist);
             if(dist == 0){
                 arrived = true;
-                Debug.Log(arrived);
+                // Debug.Log(arrived);
                 HandAttachedUpdate(hand);
             }
             yield return new WaitForFixedUpdate();

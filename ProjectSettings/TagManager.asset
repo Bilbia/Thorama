@@ -6,6 +6,7 @@ TagManager:
   tags:
   - hammer
   - hand
+  - destructable
   layers:
   - Default
   - TransparentFX
