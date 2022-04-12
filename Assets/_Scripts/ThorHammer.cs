@@ -9,6 +9,9 @@ public class ThorHammer : MonoBehaviour
     public GameObject leftHandObj;
     public GameObject rightHandObj;
     public GameObject head;
+    public GameObject hammerHandObj;
+
+    public AudioSource audiosource;
 
     [SerializeField]
     private float leftHandY;
@@ -29,20 +32,28 @@ public class ThorHammer : MonoBehaviour
     public Hand leftHand;
     public Hand rightHand;
 
-    public GameObject lightning;
+    public ParticleSystem lightning;
+
+    private Vector3 leftPos = new Vector3(50, 15.67f, -2.5f);
+    private Quaternion leftRot = Quaternion.Euler(272, -78.2f, 171.9f);
+    private Vector3 rightPos = new Vector3(-46.31f, 11.8f, 2.8f);
+    private Quaternion rightRot = Quaternion.Euler(272, -78.2f, -1);
+    
 
     GameManager gm;
 
 
 
-    // Start is called before the first frame update
     void Start()
     {
         interactable = GetComponent<Interactable>();
+        ParticleSystem.EmissionModule emission = lightning.emission;
+        emission.enabled = false;
         gm = GameManager.GetInstance();
+
+        audiosource.Play();
     }
 
-    // Update is called once per frame
     void Update()
     {
         leftHandY = leftHandObj.transform.position.y;
@@ -59,19 +70,20 @@ public class ThorHammer : MonoBehaviour
         }
         
         if (leftHand.ObjectIsAttached(gameObject) && SteamVR_Actions.default_GrabGrip.GetState(leftInput)){
-            lightning.SetActive(true);
-            // Debug.Log("lancou raio");
+            ParticleSystem.EmissionModule emission = lightning.emission;
+            emission.enabled = true;
         }
 
         if (rightHand.ObjectIsAttached(gameObject) && SteamVR_Actions.default_GrabGrip.GetState(rightInput)){
-            lightning.SetActive(true);
-            // Debug.Log("lancou raio");
+            ParticleSystem.EmissionModule emission = lightning.emission;
+            emission.enabled = true;
         }
 
 
 
         if (SteamVR_Actions.default_GrabGrip.GetStateUp(leftInput) || SteamVR_Actions.default_GrabGrip.GetStateUp(rightInput)){
-            lightning.SetActive(false);
+            ParticleSystem.EmissionModule emission = lightning.emission;
+            emission.enabled = false;
         }
         
         
@@ -83,6 +95,17 @@ public class ThorHammer : MonoBehaviour
             GrabTypes grip = hand.GetBestGrabbingType();
             Hand.AttachmentFlags attFlags = gameObject.GetComponent<Throwable>().attachmentFlags | Hand.AttachmentFlags.SnapOnAttach;
             hand.AttachObject(gameObject, grip, attFlags);
+
+            // hammerHandObj.transform.position = rightPos;
+
+            if(hand == leftHand){
+                hammerHandObj.transform.localRotation = leftRot;
+                hammerHandObj.transform.localPosition = leftPos;
+            }
+            else{
+                hammerHandObj.transform.localRotation = rightRot;
+                hammerHandObj.transform.localPosition = rightPos;
+            }
         }
 
         if (hand.IsGrabEnding(this.gameObject))

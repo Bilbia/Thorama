@@ -5,13 +5,13 @@ using UnityEngine;
 public class DestroyObject : MonoBehaviour
 {
 
-    // Start is called before the first frame update
+    public AudioSource audiosource;
+
     void Start()
     {
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         
@@ -21,5 +21,14 @@ public class DestroyObject : MonoBehaviour
     {
         Debug.Log("particle hit");
         Destroy(this.gameObject);
+        audiosource.Play();
+    }
+
+    void OnCollisionEnter(Collision col)
+    {
+        if(col.collider.tag == "hammer"){
+            Destroy(this.gameObject);
+            audiosource.Play();
+        }
     }
 }
